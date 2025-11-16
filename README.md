@@ -1,335 +1,266 @@
-Занятие 2. Работа с mdadm
-Задание
-• Добавить в виртуальную машину несколько дисков
-• Собрать RAID-0/1/5/10 на выбор
-• Сломать и починить RAID
-• Создать GPT таблицу, пять разделов и смонтировать их в системе.
- -- вместо добавления 5 дисков добавил один и разделил его на 5 логических gdisk'ом как на лекции
-Команды и результат их выполнения:
+Домашнее задание 3(..-4)
+На виртуальной машине с Ubuntu 24.04 и LVM.
+Уменьшить том под / до 8G.
+Выделить том под /home.
+Выделить том под /var - сделать в mirror.
+/home - сделать том для снапшотов.
+Прописать монтирование в fstab. Попробовать с разными опциями и разными файловыми системами (на выбор).
+Работа со снапшотами:
+сгенерить файлы в /home/;
+снять снапшот;
+удалить часть файлов;
+восстановится со снапшота.
 
-2025-09-25 20:49:20 root: lsblk
-###### NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS
-###### loop0    7:0    0     4K  1 loop /snap/bare/5
-###### loop1    7:1    0  73.9M  1 loop /snap/core22/2133
-###### loop2    7:2    0  73.9M  1 loop /snap/core22/2111
-###### loop3    7:3    0 246.4M  1 loop /snap/firefox/6738
-###### loop4    7:4    0  10.7M  1 loop /snap/firmware-updater/127
-###### loop5    7:5    0 247.1M  1 loop /snap/firefox/6836
-###### loop6    7:6    0 505.1M  1 loop /snap/gnome-42-2204/176
-###### loop7    7:7    0  11.1M  1 loop /snap/firmware-updater/167
-###### loop8    7:8    0  10.3M  1 loop /snap/snap-store/1124
-###### loop9    7:9    0   516M  1 loop /snap/gnome-42-2204/202
-###### loop10   7:10   0  91.7M  1 loop /snap/gtk-common-themes/1535
-###### loop11   7:11   0  38.7M  1 loop /snap/snapd/21465
-###### loop12   7:12   0  50.8M  1 loop /snap/snapd/25202
-###### loop13   7:13   0   476K  1 loop /snap/snapd-desktop-integration/157
-###### loop14   7:14   0   576K  1 loop /snap/snapd-desktop-integration/315
-###### sda      8:0    0    50G  0 disk 
-###### ├─sda1   8:1    0     1M  0 part 
-###### └─sda2   8:2    0    50G  0 part /var/snap/firefox/common/host-hunspell
-######                                  /
-###### sdb      8:16   0    10G  0 disk 
-###### ├─sdb1   8:17   0     1G  0 part 
-###### ├─sdb2   8:18   0     1G  0 part 
-###### ├─sdb3   8:19   0     1G  0 part 
-###### ├─sdb4   8:20   0     1G  0 part 
-###### └─sdb5   8:21   0     1G  0 part 
-2025-09-25 20:50:41 root: mdadm --zero-superblock --force /dev/sdb /dev/sdb1 /dev/sdb2 /dev/sdb3 /dev/sdb4 /dev/sdb5
-###### mdadm: Unrecognised md component device - /dev/sdb
-###### mdadm: Unrecognised md component device - /dev/sdb1
-###### mdadm: Unrecognised md component device - /dev/sdb2
-###### mdadm: Unrecognised md component device - /dev/sdb3
-###### mdadm: Unrecognised md component device - /dev/sdb4
-###### mdadm: Unrecognised md component device - /dev/sdb5
-2025-09-25 21:07:52 root: mdadm --create --verbose /dev/md0 -l 6 -n 5 /dev/sdb1 /dev/sdb2 /dev/sdb3 /dev/sdb4 /dev/sdb5
-###### mdadm: layout defaults to left-symmetric
-###### mdadm: layout defaults to left-symmetric
-###### mdadm: chunk size defaults to 512K
-###### mdadm: size set to 1046528K
-###### mdadm: Defaulting to version 1.2 metadata
-###### mdadm: array /dev/md0 started.
-2025-09-25 21:08:40 root: cat /proc/mdstat
-###### Personalities : [raid0] [raid1] [raid4] [raid5] [raid6] [raid10] [linear] 
-###### md0 : active raid6 sdb5[4] sdb4[3] sdb3[2] sdb2[1] sdb1[0]
-######       3139584 blocks super 1.2 level 6, 512k chunk, algorithm 2 [5/5] [UUUUU]
-######       [===================>.]  resync = 99.0% (1036976/1046528) finish=0.0min speed=22481K/sec
-######       
-###### unused devices: <none>
-2025-09-25 21:09:36 root: mdadm -D /dev/md0
-###### /dev/md0:
-######            Version : 1.2
-######      Creation Time : Thu Sep 25 21:07:52 2025
-######         Raid Level : raid6
-######         Array Size : 3139584 (2.99 GiB 3.21 GB)
-######      Used Dev Size : 1046528 (1022.00 MiB 1071.64 MB)
-######       Raid Devices : 5
-######      Total Devices : 5
-######        Persistence : Superblock is persistent
-###### 
-######        Update Time : Thu Sep 25 21:08:40 2025
-######              State : clean 
-######     Active Devices : 5
-######    Working Devices : 5
-######     Failed Devices : 0
-######      Spare Devices : 0
-###### 
-######             Layout : left-symmetric
-######         Chunk Size : 512K
-###### 
-###### Consistency Policy : resync
-###### 
-######               Name : user-VM:0  (local to host user-VM)
-######               UUID : 7890233b:d6fb14d5:91b2e37c:8c6add63
-######             Events : 17
-###### 
-######     Number   Major   Minor   RaidDevice State
-######        0       8       17        0      active sync   /dev/sdb1
-######        1       8       18        1      active sync   /dev/sdb2
-######        2       8       19        2      active sync   /dev/sdb3
-######        3       8       20        3      active sync   /dev/sdb4
-######        4       8       21        4      active sync   /dev/sdb5
-2025-09-25 21:15:56 root: mdadm /dev/md0 --fail /dev/sdb1
-###### mdadm: set /dev/sdb1 faulty in /dev/md0
-2025-09-25 21:16:10 root: cat /proc//mdstat
-###### Personalities : [raid0] [raid1] [raid4] [raid5] [raid6] [raid10] [linear] 
-###### md0 : active raid6 sdb5[4] sdb4[3] sdb3[2] sdb2[1] sdb1[0](F)
-######       3139584 blocks super 1.2 level 6, 512k chunk, algorithm 2 [5/4] [_UUUU]
-######       
-###### unused devices: <none>
-2025-09-25 21:44:37 root: mdadm -D /dev//md0
-###### /dev//md0:
-######            Version : 1.2
-######      Creation Time : Thu Sep 25 21:07:52 2025
-######         Raid Level : raid6
-######         Array Size : 3139584 (2.99 GiB 3.21 GB)
-######      Used Dev Size : 1046528 (1022.00 MiB 1071.64 MB)
-######       Raid Devices : 5
-######      Total Devices : 5
-######        Persistence : Superblock is persistent
-###### 
-######        Update Time : Thu Sep 25 21:15:57 2025
-######              State : clean, degraded 
-######     Active Devices : 4
-######    Working Devices : 4
-######     Failed Devices : 1
-######      Spare Devices : 0
-###### 
-######             Layout : left-symmetric
-######         Chunk Size : 512K
-###### 
-###### Consistency Policy : resync
-###### 
-######               Name : user-VM:0  (local to host user-VM)
-######               UUID : 7890233b:d6fb14d5:91b2e37c:8c6add63
-######             Events : 19
-###### 
-######     Number   Major   Minor   RaidDevice State
-######        -       0        0        0      removed
-######        1       8       18        1      active sync   /dev/sdb2
-######        2       8       19        2      active sync   /dev/sdb3
-######        3       8       20        3      active sync   /dev/sdb4
-######        4       8       21        4      active sync   /dev/sdb5
-###### 
-######        0       8       17        -      faulty   /dev/sdb1
-2025-09-25 21:45:12 root: mdadm /dev/md0 --remove /dev/sdb1
-###### mdadm: hot removed /dev/sdb1 from /dev/md0
-2025-09-25 21:46:33 root: mdadm --examine /dev/sdb1
-###### /dev/sdb1:
-######           Magic : a92b4efc
-######         Version : 1.2
-######     Feature Map : 0x0
-######      Array UUID : 7890233b:d6fb14d5:91b2e37c:8c6add63
-######            Name : user-VM:0  (local to host user-VM)
-######   Creation Time : Thu Sep 25 21:07:52 2025
-######      Raid Level : raid6
-######    Raid Devices : 5
-###### 
-######  Avail Dev Size : 2093056 sectors (1022.00 MiB 1071.64 MB)
-######      Array Size : 3139584 KiB (2.99 GiB 3.21 GB)
-######     Data Offset : 4096 sectors
-######    Super Offset : 8 sectors
-######    Unused Space : before=4016 sectors, after=0 sectors
-######           State : clean
-######     Device UUID : 8a798a56:4a4cab70:8d2b7796:210b4e07
-###### 
-######     Update Time : Thu Sep 25 21:08:40 2025
-######   Bad Block Log : 512 entries available at offset 16 sectors
-######        Checksum : 7dc8bd9e - correct
-######          Events : 17
-###### 
-######          Layout : left-symmetric
-######      Chunk Size : 512K
-###### 
-######    Device Role : Active device 0
-######    Array State : AAAAA ('A' == active, '.' == missing, 'R' == replacing)
-2025-09-25 21:47:10 root: mdadm --zero-superblock --force /dev/sdb1
-2025-09-25 21:47:48 root: mdadm /dev/md0 --add /dev/sdb1
-###### mdadm: added /dev/sdb1
-2025-09-25 21:47:51 root: cat /proc/mdstat
-###### Personalities : [raid0] [raid1] [raid4] [raid5] [raid6] [raid10] [linear] 
-###### md0 : active raid6 sdb1[5] sdb5[4] sdb4[3] sdb3[2] sdb2[1]
-######       3139584 blocks super 1.2 level 6, 512k chunk, algorithm 2 [5/4] [_UUUU]
-######       [====>................]  recovery = 20.4% (214912/1046528) finish=0.1min speed=71637K/sec
-######       
-###### unused devices: <none>
-2025-09-25 21:48:32 root: mdadm -D /dev/md0
-###### /dev/md0:
-######            Version : 1.2
-######      Creation Time : Thu Sep 25 21:07:52 2025
-######         Raid Level : raid6
-######         Array Size : 3139584 (2.99 GiB 3.21 GB)
-######      Used Dev Size : 1046528 (1022.00 MiB 1071.64 MB)
-######       Raid Devices : 5
-######      Total Devices : 5
-######        Persistence : Superblock is persistent
-###### 
-######        Update Time : Thu Sep 25 21:48:03 2025
-######              State : clean 
-######     Active Devices : 5
-######    Working Devices : 5
-######     Failed Devices : 0
-######      Spare Devices : 0
-###### 
-######             Layout : left-symmetric
-######         Chunk Size : 512K
-###### 
-###### Consistency Policy : resync
-###### 
-######               Name : user-VM:0  (local to host user-VM)
-######               UUID : 7890233b:d6fb14d5:91b2e37c:8c6add63
-######             Events : 39
-###### 
-######     Number   Major   Minor   RaidDevice State
-######        5       8       17        0      active sync   /dev/sdb1
-######        1       8       18        1      active sync   /dev/sdb2
-######        2       8       19        2      active sync   /dev/sdb3
-######        3       8       20        3      active sync   /dev/sdb4
-######        4       8       21        4      active sync   /dev/sdb5
-2025-09-25 21:54:29 root: parted -s /dev/md0 mklabel gpt
-2025-09-25 22:10:33 root: parted /dev/md0 mkpart primary ext4 0% 20%
-###### Information: You may need to update /etc/fstab.
-###### 
-2025-09-25 22:10:44 root: parted /dev/md0 mkpart primary ext4 20% 40%
-###### Information: You may need to update /etc/fstab.
-###### 
-2025-09-25 22:10:49 root: parted /dev/md0 mkpart primary ext4 40% 60%
-###### Information: You may need to update /etc/fstab.
-###### 
-2025-09-25 22:10:54 root: parted /dev/md0 mkpart primary ext4 60% 80%
-###### Information: You may need to update /etc/fstab.
-###### 
-2025-09-25 22:11:01 root: parted /dev/md0 mkpart primary ext4 80% 100%
-###### Information: You may need to update /etc/fstab.
-###### 
-2025-09-25 22:14:00 root: for i in $(seq 1 5 ); do mkfs.ext4 /dev/md0p$i; done
-root@user-VM:~# for i in $(seq 1 5 ); do mkfs.ext4 /dev/md0p$i; done
+2025-11-16 21:30:47 root: lsblk
+###### NAME                      MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+###### sda                         8:0    0   10G  0 disk 
+###### ├─sda1                      8:1    0    1M  0 part 
+###### ├─sda2                      8:2    0  1.8G  0 part /boot
+###### └─sda3                      8:3    0  8.2G  0 part 
+######   └─ubuntu--vg-ubuntu--lv 252:0    0  8.2G  0 lvm  /
+###### sdb                         8:16   0   10G  0 disk 
+###### sdc                         8:32   0    2G  0 disk 
+###### sdd                         8:48   0    1G  0 disk 
+###### sde                         8:64   0    1G  0 disk 
+###### sr0                        11:0    1 1024M  0 rom  
+2025-11-16 21:34:00 root: pvcreate /dev/sdb
+######   Physical volume "/dev/sdb" successfully created.
+2025-11-16 21:34:11 root: vgcreate vg_root /dev/sdb
+######   Volume group "vg_root" successfully created
+2025-11-16 21:34:34 root: lvcreate -n lv_root -l +100%FREE /dev/vg_root
+######   Logical volume "lv_root" created.
+2025-11-16 21:34:50 root: mkfs.ext4 /dev/vg_root/lv_root
 ###### mke2fs 1.47.0 (5-Feb-2023)
-###### Creating filesystem with 156672 4k blocks and 39200 inodes
-###### Filesystem UUID: 0b97dfe9-d201-4718-a092-abf6e70d6c40
+###### Creating filesystem with 2620416 4k blocks and 655360 inodes
+###### Filesystem UUID: 8ad732bb-b8d6-4148-8922-00061341efaa
 ###### Superblock backups stored on blocks: 
-###### 	32768, 98304
+###### 	32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632
+###### 
+###### Allocating group tables:  0/80     done                            
+###### Writing inode tables:  0/80     done                            
+###### Creating journal (16384 blocks): done
+###### Writing superblocks and filesystem accounting information:  0/80     done
+###### 
+2025-11-16 21:35:01 root: mount /dev/vg_root/lv_root /mnt
+2025-11-16 21:40:20 root: rsync -avxHAX / /mnt/ --stats
+###### sending incremental file list
+###### home/user/command_log.txt
+###### tmp/
+###### tmp/tmp.mb6EyDSh48
+###### 
+###### Number of files: 97,825 (reg: 78,852, dir: 10,640, link: 8,333)
+###### Number of created files: 1 (reg: 1)
+###### Number of deleted files: 0
+###### Number of regular files transferred: 2
+###### Total file size: 2,534,582,919 bytes
+###### Total transferred file size: 1,834 bytes
+###### Literal data: 1,860 bytes
+###### Matched data: 0 bytes
+###### File list size: 393,193
+###### File list generation time: 0.001 seconds
+###### File list transfer time: 0.000 seconds
+###### Total bytes sent: 2,653,706
+###### Total bytes received: 11,250
+###### 
+###### sent 2,653,706 bytes  received 11,250 bytes  1,065,982.40 bytes/sec
+###### total size is 2,534,582,919  speedup is 951.08
+2025-11-16 21:41:30 root: for i in /proc/ /sys/ /dev/ /run/ /boot/
+2025-11-16 21:41:30 root: do mount --bind /mnt/
+2025-11-16 21:41:30 root: done
+2025-11-16 21:43:34 root: chroot /mnt/
+2025-11-16 21:43:38 root: grub-mkconfig -o /boot/grub/grub.cfg
+###### Sourcing file `/etc/default/grub'
+###### Generating grub configuration file ...
+###### Found linux image: /boot/vmlinuz-6.8.0-87-generic
+###### Found initrd image: /boot/initrd.img-6.8.0-87-generic
+###### Warning: os-prober will not be executed to detect other bootable partitions.
+###### Systems on them will not be added to the GRUB boot configuration.
+###### Check GRUB_DISABLE_OS_PROBER documentation entry.
+###### Adding boot menu entry for UEFI Firmware Settings ...
+###### done
+2025-11-16 21:44:15 root: update-initramfs -u
+###### update-initramfs: Generating /boot/initrd.img-6.8.0-87-generic
+2025-11-16 21:44:32 root: reboot
+2025-11-16 21:49:41 root: lsblk
+###### NAME                      MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+###### sda                         8:0    0   10G  0 disk 
+###### ├─sda1                      8:1    0    1M  0 part 
+###### ├─sda2                      8:2    0  1.8G  0 part /boot
+###### └─sda3                      8:3    0  8.2G  0 part 
+######   └─ubuntu--vg-ubuntu--lv 252:1    0  8.2G  0 lvm  
+###### sdb                         8:16   0   10G  0 disk 
+###### └─vg_root-lv_root         252:0    0   10G  0 lvm  /
+###### sdc                         8:32   0    2G  0 disk 
+###### sdd                         8:48   0    1G  0 disk 
+###### sde                         8:64   0    1G  0 disk 
+###### sr0                        11:0    1 1024M  0 rom  
+2025-11-16 21:52:26 root: lvremove /dev/ubuntu-vg/ubuntu-lv
+###### Do you really want to remove and DISCARD active logical volume ubuntu-vg/ubuntu-lv? [y/n]:   Logical volume "ubuntu-lv" successfully removed.
+2025-11-16 21:52:52 root: lvcreate -n ubuntu-vg/ubuntu-lv -L 8G /dev/ubuntu-vg
+###### WARNING: ext4 signature detected on /dev/ubuntu-vg/ubuntu-lv at offset 1080. Wipe it? [y/n]:   Wiping ext4 signature on /dev/ubuntu-vg/ubuntu-lv.
+######   Logical volume "ubuntu-lv" created.
+2025-11-16 21:53:08 root: mkfs.ext4 /dev/ubuntu-vg/ubuntu-lv
+###### mke2fs 1.47.0 (5-Feb-2023)
+###### Creating filesystem with 2097152 4k blocks and 524288 inodes
+###### Filesystem UUID: bf8459e4-9b6a-4cf5-9060-862ef9d288d6
+###### Superblock backups stored on blocks: 
+###### 	32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632
+###### 
+###### Allocating group tables:  0/64     done                            
+###### Writing inode tables:  0/64     done                            
+###### Creating journal (16384 blocks): done
+###### Writing superblocks and filesystem accounting information:  0/64     done
+###### 
+2025-11-16 21:53:26 root: mount /dev/ubuntu-vg/ubuntu-lv /mnt
+2025-11-16 21:54:09 root: rsync -avxHAX / /mnt/ --stats
+2025-11-16 21:56:03 root: for i in /proc/ /sys/ /dev/ /run/ /boot/; do mount --bind /mnt/; done
+2025-11-16 21:56:43 root: chroot /mnt/
+2025-11-16 21:56:59 root: grub-mkconfig -o /boot/grub/grub.cfg
+###### Sourcing file `/etc/default/grub'
+###### Generating grub configuration file ...
+###### Found linux image: /boot/vmlinuz-6.8.0-87-generic
+###### Found initrd image: /boot/initrd.img-6.8.0-87-generic
+###### Warning: os-prober will not be executed to detect other bootable partitions.
+###### Systems on them will not be added to the GRUB boot configuration.
+###### Check GRUB_DISABLE_OS_PROBER documentation entry.
+###### Adding boot menu entry for UEFI Firmware Settings ...
+###### done
+2025-11-16 21:57:15 root: update-initramfs -u
+###### update-initramfs: Generating /boot/initrd.img-6.8.0-87-generic
+2025-11-16 22:02:23 root: echo Выделить том под /var в зеркало
+###### Выделить том под /var в зеркало
+2025-11-16 22:02:52 root: pvcreate /dev/sdc /dev/sdd
+######   Physical volume "/dev/sdc" successfully created.
+######   Physical volume "/dev/sdd" successfully created.
+2025-11-16 22:03:05 root: vgcreate vg_var /dev/sdc /dev/sdd
+######   Volume group "vg_var" successfully created
+2025-11-16 22:03:25 root: lvcreate -L 950M -m1 -n lv_var vg_var
+######   Rounding up size to full physical extent 952.00 MiB
+######   Logical volume "lv_var" created.
+2025-11-16 22:04:12 root: mkfs.ext4 /dev/vg_var/lv_var
+###### mke2fs 1.47.0 (5-Feb-2023)
+###### Creating filesystem with 243712 4k blocks and 60928 inodes
+###### Filesystem UUID: a616a958-5785-4238-b525-371b078ba1f9
+###### Superblock backups stored on blocks: 
+###### 	32768, 98304, 163840, 229376
 ###### 
 ###### Allocating group tables: done                            
 ###### Writing inode tables: done                            
 ###### Creating journal (4096 blocks): done
 ###### Writing superblocks and filesystem accounting information: done
 ###### 
+2025-11-16 22:04:22 root: mount /dev/vg_var/lv_var /mnt
+2025-11-16 22:04:38 root: cp -aR /var/backups /var/cache /var/crash /var/lib /var/local /var/lock /var/log /var/mail /var/opt /var/run /var/snap /var/spool /var/tmp /mnt/
+2025-11-16 22:04:57 root: mkdir /tmp/oldvar && mv /var/* /tmp/oldvar
+2025-11-16 22:05:09 root: umount /mnt
+2025-11-16 22:05:23 root: mount /dev/vg_var/lv_var /var
+2025-11-16 22:13:52 root: echo UUID="a616a958-5785-4238-b525-371b078ba1f9" /var ext4 defaults 0 0 >> /etc/fstab
+###### UUID=a616a958-5785-4238-b525-371b078ba1f9 /var ext4 defaults 0 0
+2025-11-16 22:14:05 root: reboot
+2025-11-16 22:20:18 root: lvremove /dev/vg_root/lv_root
+###### Do you really want to remove and DISCARD active logical volume vg_root/lv_root? [y/n]:   Logical volume "lv_root" successfully removed.
+2025-11-16 22:20:31 root: vgremove /dev/vg_root
+######   Volume group "vg_root" successfully removed
+2025-11-16 22:20:46 root: pvremove /dev/sdb
+######   Labels on physical volume "/dev/sdb" successfully wiped.
+2025-11-16 22:21:27 root: lsblk
+###### NAME                      MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+###### sda                         8:0    0   10G  0 disk 
+###### ├─sda1                      8:1    0    1M  0 part 
+###### ├─sda2                      8:2    0  1.8G  0 part /boot
+###### └─sda3                      8:3    0  8.2G  0 part 
+######   └─ubuntu--vg-ubuntu--lv 252:1    0    8G  0 lvm  /
+###### sdb                         8:16   0   10G  0 disk 
+###### sdc                         8:32   0    2G  0 disk 
+###### ├─vg_var-lv_var_rmeta_0   252:2    0    4M  0 lvm  
+###### │ └─vg_var-lv_var         252:6    0  952M  0 lvm  /var
+###### └─vg_var-lv_var_rimage_0  252:3    0  952M  0 lvm  
+######   └─vg_var-lv_var         252:6    0  952M  0 lvm  /var
+###### sdd                         8:48   0    1G  0 disk 
+###### ├─vg_var-lv_var_rmeta_1   252:4    0    4M  0 lvm  
+###### │ └─vg_var-lv_var         252:6    0  952M  0 lvm  /var
+###### └─vg_var-lv_var_rimage_1  252:5    0  952M  0 lvm  
+######   └─vg_var-lv_var         252:6    0  952M  0 lvm  /var
+###### sde                         8:64   0    1G  0 disk 
+###### sr0                        11:0    1 1024M  0 rom  
+2025-11-16 22:21:42 root: echo Выделить том под /home
+###### Выделить том под /home
+2025-11-16 23:09:58 root: lvcreate -n LogVol_Home -L 2G /dev/ubuntu-vg
+######   Logical volume "LogVol_Home" created.
+2025-11-16 23:10:29 root: mkfs.ext4 /dev/ubuntu-vg/LogVol_Home
 ###### mke2fs 1.47.0 (5-Feb-2023)
-###### Creating filesystem with 157056 4k blocks and 39280 inodes
-###### Filesystem UUID: a62ab1e1-c4c2-438d-bdd0-00f2b990c9fb
+###### Creating filesystem with 524288 4k blocks and 131072 inodes
+###### Filesystem UUID: f6926fad-e66a-457d-a8f4-f81d155e18fc
 ###### Superblock backups stored on blocks: 
-###### 	32768, 98304
+###### 	32768, 98304, 163840, 229376, 294912
 ###### 
-###### Allocating group tables: done                            
-###### Writing inode tables: done                            
-###### Creating journal (4096 blocks): done
-###### Writing superblocks and filesystem accounting information: done
+###### Allocating group tables:  0/16     done                            
+###### Writing inode tables:  0/16     done                            
+###### Creating journal (16384 blocks): done
+###### Writing superblocks and filesystem accounting information:  0/16     done
 ###### 
-###### mke2fs 1.47.0 (5-Feb-2023)
-###### Creating filesystem with 156672 4k blocks and 39200 inodes
-###### Filesystem UUID: ea42200f-c27c-41d7-9b71-4fc34792970a
-###### Superblock backups stored on blocks: 
-###### 	32768, 98304
-###### 
-###### Allocating group tables: done                            
-###### Writing inode tables: done                            
-###### Creating journal (4096 blocks): done
-###### Writing superblocks and filesystem accounting information: done
-###### 
-###### mke2fs 1.47.0 (5-Feb-2023)
-###### Creating filesystem with 157056 4k blocks and 39280 inodes
-###### Filesystem UUID: 750b5719-a6f9-4266-840c-36565f322924
-###### Superblock backups stored on blocks: 
-###### 	32768, 98304
-###### 
-###### Allocating group tables: done                            
-###### Writing inode tables: done                            
-###### Creating journal (4096 blocks): done
-###### Writing superblocks and filesystem accounting information: done
-###### 
-###### mke2fs 1.47.0 (5-Feb-2023)
-###### Creating filesystem with 156672 4k blocks and 39200 inodes
-###### Filesystem UUID: 53cc83ac-e616-4522-bbe4-3afa1a2fcf1b
-###### Superblock backups stored on blocks: 
-###### 	32768, 98304
-###### 
-###### Allocating group tables: done                            
-###### Writing inode tables: done                            
-###### Creating journal (4096 blocks): done
-###### Writing superblocks and filesystem accounting information: donemke2fs 1.47.0 (5-Feb-2023)
-###### Creating filesystem with 156672 4k blocks and 39200 inodes
-###### Filesystem UUID: 0b97dfe9-d201-4718-a092-abf6e70d6c40
-###### Superblock backups stored on blocks: 
-###### 	32768, 98304
-###### 
-###### Allocating group tables: done                            
-###### Writing inode tables: done                            
-###### Creating journal (4096 blocks): done
-###### Writing superblocks and filesystem accounting information: done
-###### 
-###### mke2fs 1.47.0 (5-Feb-2023)
-###### Creating filesystem with 157056 4k blocks and 39280 inodes
-###### Filesystem UUID: a62ab1e1-c4c2-438d-bdd0-00f2b990c9fb
-###### Superblock backups stored on blocks: 
-###### 	32768, 98304
-###### 
-###### Allocating group tables: done                            
-###### Writing inode tables: done                            
-###### Creating journal (4096 blocks): done
-###### Writing superblocks and filesystem accounting information: done
-###### 
-###### mke2fs 1.47.0 (5-Feb-2023)
-###### Creating filesystem with 156672 4k blocks and 39200 inodes
-###### Filesystem UUID: ea42200f-c27c-41d7-9b71-4fc34792970a
-###### Superblock backups stored on blocks: 
-###### 	32768, 98304
-###### 
-###### Allocating group tables: done                            
-###### Writing inode tables: done                            
-###### Creating journal (4096 blocks): done
-###### Writing superblocks and filesystem accounting information: done
-###### 
-###### mke2fs 1.47.0 (5-Feb-2023)
-###### Creating filesystem with 157056 4k blocks and 39280 inodes
-###### Filesystem UUID: 750b5719-a6f9-4266-840c-36565f322924
-###### Superblock backups stored on blocks: 
-###### 	32768, 98304
-###### 
-###### Allocating group tables: done                            
-###### Writing inode tables: done                            
-###### Creating journal (4096 blocks): done
-###### Writing superblocks and filesystem accounting information: done
-###### 
-###### mke2fs 1.47.0 (5-Feb-2023)
-###### Creating filesystem with 156672 4k blocks and 39200 inodes
-###### Filesystem UUID: 53cc83ac-e616-4522-bbe4-3afa1a2fcf1b
-###### Superblock backups stored on blocks: 
-###### 	32768, 98304
-###### 
-###### Allocating group tables: done                            
-###### Writing inode tables: done                            
-###### Creating journal (4096 blocks): done
-###### Writing superblocks and filesystem accounting information: done
-###### 
-2025-09-25 22:18:41 root: mkdir -p /raid/part1 /raid/part2 /raid/part3 /raid/part4 /raid/part5
-2025-09-25 22:22:30 root:  for i in $(seq 1 5); do mount /dev/md0p$i /raid/part$i; done
+2025-11-16 23:10:42 root: mount /dev/ubuntu-vg/LogVol_Home /mnt/
+2025-11-16 23:10:52 root: cp -aR /home/user /mnt/
+2025-11-16 23:11:02 root: rm -rf /home/*
+2025-11-16 23:11:25 root: umount /mnt
+2025-11-16 23:11:53 root: mount /dev/ubuntu-vg/LogVol_Home /home/
+2025-11-16 23:12:47 root: echo UUID="f6926fad-e66a-457d-a8f4-f81d155e18fc" /home xfs defaults 0 0 /etc/fstab
+###### UUID=f6926fad-e66a-457d-a8f4-f81d155e18fc /home xfs defaults 0 0 /etc/fstab
+2025-11-16 23:15:45 root: lsblk
+###### NAME                       MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+###### sda                          8:0    0   20G  0 disk 
+###### ├─sda1                       8:1    0    1M  0 part 
+###### ├─sda2                       8:2    0  1.8G  0 part /boot
+###### └─sda3                       8:3    0 12.2G  0 part 
+######   ├─ubuntu--vg-ubuntu--lv  252:0    0  9.2G  0 lvm  /
+######   └─ubuntu--vg-LogVol_Home 252:6    0    2G  0 lvm  /home
+###### sdb                          8:16   0   10G  0 disk 
+###### sdc                          8:32   0    2G  0 disk 
+###### ├─vg_var-lv_var_rmeta_0    252:1    0    4M  0 lvm  
+###### │ └─vg_var-lv_var          252:5    0  952M  0 lvm  /var
+###### └─vg_var-lv_var_rimage_0   252:2    0  952M  0 lvm  
+######   └─vg_var-lv_var          252:5    0  952M  0 lvm  /var
+###### sdd                          8:48   0    1G  0 disk 
+###### ├─vg_var-lv_var_rmeta_1    252:3    0    4M  0 lvm  
+###### │ └─vg_var-lv_var          252:5    0  952M  0 lvm  /var
+###### └─vg_var-lv_var_rimage_1   252:4    0  952M  0 lvm  
+######   └─vg_var-lv_var          252:5    0  952M  0 lvm  /var
+###### sde                          8:64   0    1G  0 disk 
+###### sr0                         11:0    1 1024M  0 rom  
+2025-11-16 23:16:02 root: Работа со снапшотами
+###### Работа: command not found
+2025-11-16 23:16:26 root: touch /home/file1 /home/file2 /home/file3 /home/file4 /home/file5 /home/file6 /home/file7 /home/file8 /home/file9 /home/file10 /home/file11 /home/file12 /home/file13 /home/file14 /home/file15 /home/file16 /home/file17 /home/file18 /home/file19 /home/file20
+2025-11-16 23:17:15 root: lvcreate -L 100MB -s -n home_snap /dev/ubuntu-vg/LogVol_Home
+###### Logical volume "home_snap" created.
+2025-11-16 23:17:33 root: rm -f /home/file{11..20}
+2025-11-16 23:17:41 root: umount /home
+2025-11-16 23:17:55 root: lvconvert --merge /dev/ubuntu-vg/home_snap
+###### Merging of volume ubuntu-vg/home_snap started.
+###### ubuntu-vg/LogVol_Home: Merged: 100.00%
+2025-11-16 23:18:06 root: mount /dev/mapper/ubuntu--vg-LogVol_Home /home
+2025-11-16 23:18:34 root: ls -al /home
+###### total 28
+###### drwxr-xr-x  4 root root  4096 Nov 16 23:16 .
+###### drwxr-xr-x 23 root root  4096 Nov 16 19:49 ..
+###### -rw-r--r--  1 root root     0 Nov 16 23:16 file1
+###### -rw-r--r--  1 root root     0 Nov 16 23:16 file10
+###### -rw-r--r--  1 root root     0 Nov 16 23:16 file11
+###### -rw-r--r--  1 root root     0 Nov 16 23:16 file12
+###### -rw-r--r--  1 root root     0 Nov 16 23:16 file13
+###### -rw-r--r--  1 root root     0 Nov 16 23:16 file14
+###### -rw-r--r--  1 root root     0 Nov 16 23:16 file15
+###### -rw-r--r--  1 root root     0 Nov 16 23:16 file16
+###### -rw-r--r--  1 root root     0 Nov 16 23:16 file17
+###### -rw-r--r--  1 root root     0 Nov 16 23:16 file18
+###### -rw-r--r--  1 root root     0 Nov 16 23:16 file19
+###### -rw-r--r--  1 root root     0 Nov 16 23:16 file2
+###### -rw-r--r--  1 root root     0 Nov 16 23:16 file20
+###### -rw-r--r--  1 root root     0 Nov 16 23:16 file3
+###### -rw-r--r--  1 root root     0 Nov 16 23:16 file4
+###### -rw-r--r--  1 root root     0 Nov 16 23:16 file5
+###### -rw-r--r--  1 root root     0 Nov 16 23:16 file6
+###### -rw-r--r--  1 root root     0 Nov 16 23:16 file7
+###### -rw-r--r--  1 root root     0 Nov 16 23:16 file8
+###### -rw-r--r--  1 root root     0 Nov 16 23:16 file9
+###### drwx------  2 root root 16384 Nov 16 23:10 lost+found
+###### drwxr-x---  4 user user  4096 Nov 16 23:15 user
