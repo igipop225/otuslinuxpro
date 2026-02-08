@@ -12,10 +12,10 @@ for pid in /proc/[0-9]*; do
         fi
         # Используем awk
         pid_num=$(echo "$stat_line" | awk '{print $1}')
-        comm=$(echo "$stat_line" | awk -F'[()]' '{print $2}')
-        state=$(echo "$stat_line" | awk '{print $3}')
-        ppid=$(echo "$stat_line" | awk '{print $4}')
-        tty_nr=$(echo "$stat_line" | awk '{print $7}')
+        comm=$(echo "$stat_line"    | awk -F'[()]' '{print $2}')
+        state=$(echo "$stat_line"   | awk '{print $3}')
+        ppid=$(echo "$stat_line"    | awk '{print $4}')
+        tty_nr=$(echo "$stat_line"  | awk '{print $7}')
 	# Определяем TTY
         tty="?"
         if [ "$tty_nr" -ne 0 ] 2>/dev/null; then
@@ -40,7 +40,7 @@ for pid in /proc/[0-9]*; do
         if [ $minutes -ge 60 ]; then
             hours=$((minutes / 60))
             minutes=$((minutes % 60))
-            time_str=$(printf "%d:%02d" $hours $minutes)
+            time_str=$(printf "%d:%02d:%02d" $hours $minutes $seconds)
         else
             time_str=$(printf "%d:%02d" $minutes $seconds)
         fi
